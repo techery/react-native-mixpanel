@@ -23,8 +23,7 @@ RCT_EXPORT_MODULE(RNMixpanel)
 
 // sharedInstanceWithToken
 RCT_EXPORT_METHOD(sharedInstanceWithToken:(NSString *)apiToken) {
-    [Mixpanel sharedInstanceWithToken:apiToken];
-    mixpanel = [Mixpanel sharedInstance];
+    mixpanel = [Mixpanel sharedInstanceWithToken:apiToken];
     // React Native runs too late to listen for applicationDidBecomeActive,
     // so we expose the private method and call it explicitly here,
     // to ensure that important things like initializing the flush timer and
@@ -91,7 +90,7 @@ RCT_EXPORT_METHOD(registerSuperPropertiesOnce:(NSDictionary *)properties) {
 
 // Init push notification
 RCT_EXPORT_METHOD(initPushHandling:(NSString *) token) {
-     [mixpanel.people addPushDeviceToken:token];
+     [self addPushDeviceToken:token];
 }
 
 // Set People Data
@@ -102,11 +101,6 @@ RCT_EXPORT_METHOD(set:(NSDictionary *)properties) {
 // Set People Data Once
 RCT_EXPORT_METHOD(setOnce:(NSDictionary *)properties) {
     [mixpanel.people setOnce: properties];
-}
-
-// Add Person's Push Token (iOS-only)
-RCT_EXPORT_METHOD(addPushDeviceToken:(NSData *)deviceToken) {
-    [mixpanel.people addPushDeviceToken:deviceToken];
 }
 
 // Remove Person's Push Token (iOS-only)
@@ -132,6 +126,21 @@ RCT_EXPORT_METHOD(trackChargeWithProperties:(nonnull NSNumber *)charge propertie
 // increment
 RCT_EXPORT_METHOD(increment:(NSString *)property count:(nonnull NSNumber *)count) {
     [mixpanel.people increment:property by:count];
+}
+
+// Add Person's Push Token (iOS-only)
+RCT_EXPORT_METHOD(addPushDeviceToken:(NSString *)pushDeviceToken) {
+    NSMutableData *deviceToken = [[NSMutableData alloc] init];
+    unsigned char whole_byte;
+    char byte_chars[3] = {'\0','\0','\0'};
+    int i;
+    for (i=0; i < [pushDeviceToken length]/2; i++) {
+        byte_chars[0] = [pushDeviceToken characterAtIndex:i*2];
+        byte_chars[1] = [pushDeviceToken characterAtIndex:i*2+1];
+        whole_byte = strtol(byte_chars, NULL, 16);
+        [deviceToken appendBytes:&whole_byte length:1];
+    }
+    [mixpanel.people addPushDeviceToken:deviceToken];
 }
 
 // reset
